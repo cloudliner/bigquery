@@ -1,11 +1,38 @@
 import * as functions from 'firebase-functions';
-// import { BigQuery } from '@google-cloud/bigquery';
+import { BigQuery } from '@google-cloud/bigquery';
 
 // // Start writing Firebase Functions
 // // https://firebase.google.com/docs/functions/typescript
 //
 export const helloWorld = functions.https.onRequest((request, response) => {
   response.send("Hello from Firebase!");
+});
+
+export const getClientLog = functions.https.onRequest(async(request, response) => {
+  const bigqueryClient = new BigQuery();
+  const user_id = request.query.user_id;
+
+  const sqlQuery = `SELECT
+     * 
+    FROM \`bigquery-219510.client_log.client_log\`
+    WHERE user_id = '${ user_id }'
+    LIMIT 10`;
+
+  const options = {
+    query: sqlQuery
+  };
+
+  // Run the query
+  const [rows] = await bigqueryClient.query(options);
+
+  console.log(`Query Results: ${rows}`);
+  rows.forEach(row => {
+    const user_name = row['user_name'];
+    const message = row['message'];
+    const output = `${user_name}, ${message}`;
+    console.log(output);
+  });
+  response.send(rows)
 });
 
 /*
