@@ -1,11 +1,19 @@
 import * as functions from 'firebase-functions';
 import { BigQuery, Dataset, Table, TableMetadata, TableField } from '@google-cloud/bigquery';
 
+const cors = require('cors')({ origin: true });
+
 const DATASET_ID = 'mixidea_data';
 const TABLE_ID = 'client_log';
 
 export const helloWorld = functions.https.onRequest((request, response) => {
   response.send("Hello from Firebase!");
+});
+
+export const writeClientLog = functions.https.onRequest(async(request, response) => {
+  await cors(request, response, () => {
+    response.send({log:'yes'});
+  });
 });
 
 export const createTable = functions.https.onRequest(async(request, response) => {
