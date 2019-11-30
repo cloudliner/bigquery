@@ -60,7 +60,8 @@ export const createTable = functions.https.onRequest(async(request, response) =>
       { name: 'trace', type: 'STRING' }
     ];
     const timePartitioning = {
-      field: 'server_time'
+      field: 'server_time',
+      type: 'DAY'
     };
     const options: TableMetadata = {
       schema: schema,
