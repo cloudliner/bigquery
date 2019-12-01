@@ -1,7 +1,9 @@
 import * as functions from 'firebase-functions';
 import { BigQuery, Dataset, Table, TableMetadata, TableField } from '@google-cloud/bigquery';
 
-const cors = require('cors')({ origin: true });
+// const cors = require('cors')({ origin: true });
+import * as corsModule from "cors";
+const cors = corsModule({ origin: true });
 
 const DATASET_ID = 'mixidea_data';
 const TABLE_ID = 'client_log';
