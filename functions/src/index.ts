@@ -32,31 +32,46 @@ export const helloWorld = functions.https.onRequest((request, response) => {
 });
 
 export const writeClientLog = functions.https.onRequest(async(request, response) => {
-  const query_obj = request.query;
+  try {
+    const query_obj = request.query;
+    const log_obj = query_obj || {};
 
-  const agent = useragent.parse(request.headers['user-agent']);
-  const useragent_str = request.headers['user-agent'];
-  const browser= agent.toAgent();
-
-  const log_obj = query_obj || {};
-  log_obj['useragent'] = useragent_str;
-  log_obj['browser'] = browser;
-  log_obj['server_time'] = new Date().toUTCString();
-
-  const bigquery = new BigQuery();
-
-  const row: any = {};
-  SCHEMA.forEach((tableField) => {
-    const name = tableField.name as string;
-    const value = log_obj[name] || 's';
-    row[name] = value;
-  });
-  const rows = [row];
-  await bigquery.dataset(DATASET_ID).table(TABLE_ID).insert(rows);
-  console.log(`Inserted ${rows.length} rows`);
-  await cors(request, response, () => {
-    response.send({log:'yes'});
-  });
+    const agent = useragent.parse(request.headers['user-agent']);
+    const useragent_str = request.headers['user-agent'];
+    const browser= agent.toAgent();
+    const serverTime = new Date().toISOString();
+    let clientTime = serverTime;
+    try {
+      clientTime = new Date(log_obj['client_time']).toISOString();
+    } catch (error) {
+      console.log(`Client Time Parse Error: ${error}`);
+    }
+  
+    log_obj['useragent'] = useragent_str;
+    log_obj['browser'] = browser;
+    log_obj['server_time'] = serverTime;
+    log_obj['client_time'] = clientTime;
+  
+    const bigquery = new BigQuery();
+  
+    const row: any = {};
+    SCHEMA.forEach((tableField) => {
+      const name = tableField.name as string;
+      const value = log_obj[name] || 's';
+      row[name] = value;
+    });
+    const rows = [row];
+    console.log(`Insert Data: ${JSON.stringify(rows)}`)
+    await bigquery.dataset(DATASET_ID).table(TABLE_ID).insert(rows);
+    console.log(`Inserted ${rows.length} rows`);
+    await cors(request, response, () => {
+      response.send({log:'yes'});
+    });
+  } catch (error) {
+    await cors(request, response, () => {
+      response.send({log:'no', error: error});
+    });
+  }
 });
 
 export const createTable = functions.https.onRequest(async(request, response) => {
